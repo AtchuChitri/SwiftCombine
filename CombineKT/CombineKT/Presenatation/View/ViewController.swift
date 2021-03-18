@@ -4,13 +4,14 @@
 //
 //  Created by Chithri Atchibabu (BLR GSS) on 16/03/21.
 //
-
+import Combine
 import UIKit
 
 class ViewController: UIViewController {
 
     var allSubjects = [SubjectModel]()
     @IBOutlet private weak var subjectTbl: UITableView!
+    private var bag = Set<AnyCancellable>()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -25,15 +26,11 @@ class ViewController: UIViewController {
     }
     
     func getAllSubjects() {
-        WebService.getAllSubjects { [weak self] result in
-            switch result {
-            case .success(let subjects):
-                self?.allSubjects = subjects
-                self?.subjectTbl.reloadData()
-            case .failure:
-                break
-            }
-        }
+        WebService.getAllSubjects().subscribe(on: DispatchQueue.main).sink { [weak self] result in
+            guard let self = self else { return }
+            self.allSubjects = result
+            self.subjectTbl.reloadData()
+        }.store(in: &bag)
     }
 }
 
@@ -52,14 +49,16 @@ extension ViewController: UITableViewDataSource {
         if let selectionCell = cell as? ListTableViewCell {
             let data = allSubjects[indexPath.row]
             selectionCell.setCellDataView(data)
-            selectionCell.scoreCompletion = { [weak self] value in
+            selectionCell.scoreCompletion.sink { [weak self] value in
+                guard let self = self else { return }
                 let alertVC = UIAlertController(title: data.subjectName, message: "\(value)", preferredStyle: .alert)
                 let alertAction = UIAlertAction(title: "OK", style: .default, handler: nil)
                 alertVC.addAction(alertAction)
-                self?.present(alertVC, animated: false) {
+                self.present(alertVC, animated: false) {
                     //done
                 }
-            }
+            }.store(in: &bag)
+
         }
         return cell
         

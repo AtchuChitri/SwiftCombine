@@ -4,7 +4,7 @@
 //
 //  Created by Chithri Atchibabu (BLR GSS) on 17/03/21.
 //
-
+import Combine
 import UIKit
 
 class ListTableViewCell: UITableViewCell {
@@ -13,7 +13,7 @@ class ListTableViewCell: UITableViewCell {
     @IBOutlet private weak var scoreBtn: UIButton!
     static let cellIndetifier = "ListTableViewCell"
     var score: Int?
-    var scoreCompletion: ((Int) -> Void)?
+    var scoreCompletion = PassthroughSubject<Int, Never>()
 
     override func awakeFromNib() {
         super.awakeFromNib()
@@ -28,7 +28,7 @@ class ListTableViewCell: UITableViewCell {
     }
     
     @IBAction func scoreClicked(_ btn: UIButton) {
-        scoreCompletion?(score ?? 0)
+        scoreCompletion.send(score ?? 0)
     }
     
     func setCellDataView(_ data: SubjectModel) {
